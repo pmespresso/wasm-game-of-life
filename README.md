@@ -1,52 +1,19 @@
-# 🦀🕸️ `wasm-pack-template`
+### WASM Game Of Life
 
-A template for kick starting a Rust and WebAssembly project using
-[`wasm-pack`](https://github.com/rustwasm/wasm-pack).
+#### Notes
 
-This template is designed for compiling Rust libraries into WebAssembly and
-publishing the resulting package to NPM.
+##### Interfacing Javascript and Rust
 
-* Want to use the published NPM package in a Website? [Check out
-  `create-wasm-app`.](https://github.com/rustwasm/create-wasm-app)
-* Want to make a monorepo-style Website without publishing to NPM? Check out
-  [`rust-webpack-template`](https://github.com/rustwasm/rust-webpack-template)
-  and/or
-  [`rust-parcel-template`](https://github.com/rustwasm/rust-parcel-template).
+* JS values (Object, Arrays, DOM nodes) live on the GC'ed heap.
+* Rust values live in WebAssembly's distinct linear memory space.
+* **WebAssembly currently does not have direct access to the JS heap**
+* **JS can read/write to the WASM linear memory space, but only as an ArrayBuffer of scalar values (u8, i32, f64, etc...)**
+* WebAssembly functions receive and return scalar values.
 
-## 🔋 Batteries Included
+* `wasm_bindgen` defines a standard of communication across the boundary between the JS heap and WebAssembly linear memory space. It is a tool for designing the interface chosen by the end developer.
 
-* [`wasm-bindgen`](https://github.com/rustwasm/wasm-bindgen) for communicating
-  between WebAssembly and JavaScript.
-* [`console_error_panic_hook`](https://github.com/rustwasm/console_error_panic_hook)
-  for logging panic messages to the developer console.
-* [`wee_alloc`](https://github.com/rustwasm/wee_alloc), an allocator optimized
-  for small code size.
+* When designing such interface between JS and WASM, we want to minimize:
+1. Copying in and out of WASM linear memory space
+2. Serializing/Deserializing operations
 
-## 🚴 Usage
-
-### 🐑 Use `cargo generate` to Clone this Template
-
-[Learn more about `cargo generate` here.](https://github.com/ashleygwilliams/cargo-generate)
-
-```
-cargo generate --git https://github.com/rustwasm/wasm-pack-template.git --name my-project
-cd my-project
-```
-
-### 🛠️ Build with `wasm-pack build`
-
-```
-wasm-pack build
-```
-
-### 🔬 Test in Headless Browsers with `wasm-pack test`
-
-```
-wasm-pack test --headless --firefox
-```
-
-### 🎁 Publish to NPM with `wasm-pack publish`
-
-```
-wasm-pack publish
-```
+**Rule of Thumb** -> a good JS ↔ WASM interface design is often one where large, long-lived data structures are implemented as Rust types that live in the WebAssembly linear memory, and are exposed to JavaScript as opaque handles.
